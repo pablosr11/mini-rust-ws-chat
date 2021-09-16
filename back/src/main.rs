@@ -19,8 +19,47 @@ struct Server {
     pool: Pool<SqliteConnectionManager>,
 }
 
+#[derive(Debug)]
+struct Mensaje {
+    name: String,
+    msg: String,
+    date: String,
+}
+
 impl Handler for Server {
     fn on_open(&mut self, shake: ws::Handshake) -> Result<()> {
+        let pool = self.pool.clone();
+        let sender = self.out.clone();
+
+        thread::spawn(move || {
+            let conn = pool.get().unwrap();
+            let mut stmt = conn
+                .prepare("SELECT name,msg,date FROM (SELECT name,msg,date FROM chat_messages ORDER BY date DESC LIMIT 5) ORDER BY date")
+                .unwrap();
+            let mensajes = stmt
+                .query_map([], |row| {
+                    Ok(Mensaje {
+                        name: row.get(0)?,
+                        msg: row.get(1)?,
+                        date: row.get(2)?,
+                    })
+                })
+                .unwrap();
+            for me in mensajes {
+                let stuff = me.unwrap();
+                sender
+                    .send(Message::Text(
+                        json!({
+                            "name": stuff.name,
+                            "message": stuff.msg,
+                            "received_at": stuff.date
+                        })
+                        .to_string(),
+                    ))
+                    .unwrap();
+            }
+        });
+
         println!(
             "new conn from {:?} - origin {:?}",
             shake.peer_addr,
@@ -67,6 +106,13 @@ impl Handler for Server {
 fn main() {
     let manager = SqliteConnectionManager::file("file.db");
     let pool = r2d2::Pool::builder().build(manager).unwrap();
+
+    let conn = pool.get().unwrap();
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS chat_messages (name TEXT,msg TEXT,date TEXT)",
+        [],
+    )
+    .unwrap();
 
     ws::listen(WS_ADDRESS, |out| Server {
         out,
