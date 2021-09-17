@@ -32,7 +32,7 @@ impl Handler for Server {
         let sender = self.out.clone();
 
         thread::spawn(move || {
-            let conn = pool.get().unwrap();
+            let conn = &pool.get().unwrap();
             let mut stmt = conn
                 .prepare("SELECT name,msg,date FROM (SELECT name,msg,date FROM chat_messages ORDER BY date DESC LIMIT 5) ORDER BY date")
                 .unwrap();
@@ -87,7 +87,7 @@ impl Handler for Server {
 
             let pool = self.pool.clone();
             thread::spawn(move || {
-                let conn = pool.get().unwrap();
+                let conn = &pool.get().unwrap();
                 conn.execute(
                     "INSERT INTO chat_messages (name,msg,date) values (?,?,?)",
                     [json_msg.name, json_msg.message, current_time],
