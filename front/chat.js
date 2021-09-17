@@ -36,6 +36,7 @@ var sendButton = document.getElementById("send");
 sendButton.addEventListener("mousedown", function (_) {
     send_msg(socket, username);
 });
+// phone support
 sendButton.addEventListener("touchstart", function (_) {
     send_msg(socket, username);
 });
@@ -45,3 +46,8 @@ socket.onmessage = function (event) {
 };
 var walletButton = document.getElementById("wallet");
 walletButton.addEventListener("click", getProvider);
+document.addEventListener("keyup", function (e) {
+    if (e.code === "Enter") {
+        send_msg(socket, username);
+    }
+});

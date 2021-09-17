@@ -42,6 +42,7 @@ const sendButton = <HTMLButtonElement>document.getElementById("send");
 sendButton.addEventListener("mousedown", (_) => {
     send_msg(socket, username);
 })
+// phone support
 sendButton.addEventListener("touchstart", (_) => {
     send_msg(socket, username);
 })
@@ -54,8 +55,10 @@ socket.onmessage = function (event) {
 const walletButton = <HTMLButtonElement>document.getElementById("wallet");
 walletButton.addEventListener("click", getProvider);
 
-
-
-
+document.addEventListener("keyup", (e) => {
+    if (e.code === "Enter") {
+        send_msg(socket, username);
+    }
+})
 
 
