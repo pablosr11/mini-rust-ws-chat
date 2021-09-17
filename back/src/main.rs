@@ -28,7 +28,7 @@ struct Mensaje {
 
 impl Handler for Server {
     fn on_open(&mut self, shake: ws::Handshake) -> Result<()> {
-        let pool = self.pool.clone();
+        let pool = self.pool.clone(); // so it can be used to trigger queries
         let sender = self.out.clone();
 
         thread::spawn(move || {
