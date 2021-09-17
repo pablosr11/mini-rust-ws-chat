@@ -14,33 +14,45 @@ function write_msg(event): void {
     messages.value += `[${msg_dtime}] ${response.name}: ${response.message}\n`;
 
 }
-
-document.addEventListener("DOMContentLoaded", function () {
-    try {
-        const socket: WebSocket = new WebSocket(WS_ADDRS)
-
-        const name: string = "defaultUser" //prompt("Username?")
-        document.getElementById("username").innerText = name;
-
-        // when clicking the button, send json message
-        const sendButton = <HTMLButtonElement>document.getElementById("send");
-        sendButton.addEventListener("mousedown", (_) => {
-            send_msg(socket, name);
-        })
-        sendButton.addEventListener("touchstart", (_) => {
-            send_msg(socket, name);
-        })
-
-        // upon receiving a msg, append it to the text area
-        socket.onmessage = function (event) {
-            write_msg(event)
-        };
-
-    } catch (error) {
-        alert("Unable to connect. Refresh in 10s")
+const getProvider = () => {
+    if ("solana" in window) {
+        const provider = (<any>window).solana;
+        if (provider.isPhantom) {
+            (<any>window).solana.connect();
+            (<any>window).solana.on("connect", () => {
+                let c = <HTMLButtonElement>document.getElementById("wallet");
+                c.innerText = "Connected";
+                c.disabled = true;
+                username = (<any>window).solana.publicKey.toString().slice(0, 5)
+                document.getElementById("username").innerText = username
+            })
+            return provider;
+        }
     }
-});
+    window.open("https://phantom.app/", "_blank");
+};
 
+const socket: WebSocket = new WebSocket(WS_ADDRS)
+
+let username: string = "defaultUser" //prompt("Username?")
+document.getElementById("username").innerText = username;
+
+// when clicking the button, send json message
+const sendButton = <HTMLButtonElement>document.getElementById("send");
+sendButton.addEventListener("mousedown", (_) => {
+    send_msg(socket, username);
+})
+sendButton.addEventListener("touchstart", (_) => {
+    send_msg(socket, username);
+})
+
+// upon receiving a msg, append it to the text area
+socket.onmessage = function (event) {
+    write_msg(event)
+};
+
+const walletButton = <HTMLButtonElement>document.getElementById("wallet");
+walletButton.addEventListener("click", getProvider);
 
 
 
